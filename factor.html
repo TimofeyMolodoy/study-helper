@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0518">
+    <title>Разложение числа</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <a href="math.html" class="back-btn">← В меню</a>
+
+    <h1>Разложение числа</h1>
+
+    <div class="input-row">
+        <input type="number" id="numInput" placeholder="Введите число" inputmode="numeric" min="2">
+    </div>
+
+    <button class="calc-btn" id="calcBtn">Разложить</button>
+
+    <div class="result" id="result">
+        <div class="result-title">Каноническая запись</div>
+        <div class="canonical" id="canonical"></div>
+
+        <div class="result-title">Простые множители</div>
+        <div class="factors-list" id="factorsList"></div>
+
+        <div class="result-title">Все делители (<span id="divCount">0</span>)</div>
+        <div class="divisors" id="divisorsList"></div>
+    </div>
+
+    <script>
+        const numInput = document.getElementById('numInput');
+        const calcBtn = document.getElementById('calcBtn');
+        const resultBlock = document.getElementById('result');
+        const canonicalEl = document.getElementById('canonical');
+        const factorsListEl = document.getElementById('factorsList');
+        const divisorsListEl = document.getElementById('divisorsList');
+        const divCountEl = document.getElementById('divCount');
+
+        // Разложение на простые множители
+        function factorize(n) {
+            const factors = new Map();
+            let d = 2;
+            while (d * d <= n) {
+                while (n % d === 0) {
+                    factors.set(d, (factors.get(d) || 0) + 1);
+                    n /= d;
+                }
+                d += d === 2 ? 1 : 2;
+            }
+            if (n > 1) factors.set(n, (factors.get(n) || 0) + 1);
+            return factors;
+        }
+
+        // Все делители из разложения
+        function getDivisors(factorsMap) {
+            let divisors = [1];
+            for (const [prime, exp] of factorsMap) {
+                const newDivisors = [];
+                let power = 1;
+                for (let i = 0; i <= exp; i++) {
+                    for (const d of divisors) {
+                        newDivisors.push(d * power);
+                    }
+                    power *= prime;
+                }
+                divisors = newDivisors;
+            }
+            return divisors.sort((a, b) => a - b);
+        }
+
+        // Каноническая запись с HTML-степенями
+        function buildCanonicalHTML(n, factorsMap) {
+            if (factorsMap.size === 0) return `${n}`;
+            let parts = [];
+            for (const [prime, exp] of factorsMap) {
+                if (exp === 1) {
+                    parts.push(`<span class="base">${prime}</span>`);
+                } else {
+                    parts.push(`<span class="base">${prime}</span><span class="exp">${exp}</span>`);
+                }
+            }
+            return `${n} = ${parts.join(' × ')}`;
+        }
+
+        calcBtn.addEventListener('click', () => {
+            const val = numInput.value.trim();
+            if (val === '') {
+                showError('Введите число!');
+                return;
+            }
+
+            const num = parseInt(val, 10);
+
+            if (isNaN(num)) {
+                showError('Это не число!');
+                return;
+            }
+
+            if (num < 2) {
+                showError('Число должно быть больше 1!');
+                return;
+            }
+
+            if (num > 1e12) {
+                showError('Слишком большое число (макс. 1 000 000 000 000)');
+                return;
+            }
+
+            const factorsMap = factorize(num);
+            const divisors = getDivisors(factorsMap);
+
+            canonicalEl.innerHTML = buildCanonicalHTML(num, factorsMap);
+
+            factorsListEl.innerHTML = '';
+            for (const [prime, exp] of factorsMap) {
+                const chip = document.createElement('div');
+                chip.className = 'factor-chip';
+                chip.textContent = exp === 1 ? `${prime}` : `${prime}^${exp}`;
+                factorsListEl.appendChild(chip);
+            }
+
+            divisorsListEl.innerHTML = '';
+            divisors.forEach(d => {
+                const div = document.createElement('div');
+                div.className = 'divisor';
+                div.textContent = d.toLocaleString('ru-RU');
+                divisorsListEl.appendChild(div);
+            });
+            divCountEl.textContent = divisors.length;
+
+            resultBlock.classList.add('visible');
+        });
+
+        function showError(text) {
+            resultBlock.classList.remove('visible');
+            const old = document.querySelector('.error');
+            if (old) old.remove();
+
+            const err = document.createElement('div');
+            err.className = 'error';
+            err.textContent = text;
+            calcBtn.insertAdjacentElement('afterend', err);
+
+            setTimeout(() => err.remove(), 2500);
+        }
+    </script>
+
+</body>
+</html>

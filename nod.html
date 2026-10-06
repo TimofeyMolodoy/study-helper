@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0518">
+    <title>НОД и НОК</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top, #1a1035 0%, #0a0518 60%, #050210 100%);
+            color: #eae6ff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Кнопка "Назад в меню" */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: linear-gradient(145deg, #1e1440, #150c2e);
+            border: 2px solid rgba(167, 139, 250, 0.35);
+            border-radius: 12px;
+            color: #a78bfa;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            width: fit-content;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn:active {
+            background: linear-gradient(145deg, #2a1d5c, #1e1440);
+            border-color: #22d3ee;
+            color: #22d3ee;
+            transform: scale(0.97);
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+        }
+
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            font-weight: 800;
+            letter-spacing: 1px;
+            background: linear-gradient(90deg, #a78bfa, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 8px 0;
+        }
+
+        /* Список полей ввода */
+        .inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-row input {
+            flex: 1;
+            height: 58px;
+            padding: 0 18px;
+            background: linear-gradient(145deg, #1e1440, #150c2e);
+            border: 2px solid rgba(167, 139, 250, 0.35);
+            border-radius: 14px;
+            color: #eae6ff;
+            font-size: 18px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .input-row input::placeholder {
+            color: #6b5da8;
+            font-weight: 500;
+        }
+
+        .input-row input:focus {
+            border-color: #22d3ee;
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.3);
+        }
+
+        /* Кнопка удалить поле */
+        .remove-btn {
+            width: 58px;
+            height: 58px;
+            background: linear-gradient(145deg, #2a0d1a, #1a0510);
+            border: 2px solid rgba(244, 63, 94, 0.4);
+            border-radius: 14px;
+            color: #f43f5e;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .remove-btn:active {
+            background: linear-gradient(145deg, #4a0d1a, #2a0510);
+            border-color: #f43f5e;
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.5);
+            transform: scale(0.95);
+        }
+
+        /* Кнопка "Плюс" — добавить число */
+        .add-btn {
+            width: 100%;
+            height: 58px;
+            background: transparent;
+            border: 2px dashed rgba(167, 139, 250, 0.5);
+            border-radius: 14px;
+            color: #a78bfa;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+
+        .add-btn:active {
+            background: rgba(167, 139, 250, 0.1);
+            border-color: #a78bfa;
+            border-style: solid;
+            transform: scale(0.98);
+        }
+
+        /* Кнопка "Вычислить" */
+        .calc-btn {
+            width: 100%;
+            height: 62px;
+            background: linear-gradient(135deg, #a78bfa, #22d3ee);
+            border: none;
+            border-radius: 16px;
+            color: #0a0518;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 5px;
+            box-shadow: 0 8px 24px rgba(34, 211, 238, 0.25);
+        }
+
+        .calc-btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 0 25px rgba(34, 211, 238, 0.6);
+        }
+
+        /* Результат */
+        .result {
+            margin-top: 10px;
+            padding: 20px;
+            background: linear-gradient(145deg, #1e1440, #150c2e);
+            border: 2px solid rgba(167, 139, 250, 0.35);
+            border-radius: 16px;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result.visible {
+            display: block;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            font-size: 17px;
+        }
+
+        .result-row:not(:last-child) {
+            border-bottom: 1px solid rgba(167, 139, 250, 0.15);
+        }
+
+        .result-label {
+            color: #8b7bc7;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .result-value {
+            background: linear-gradient(90deg, #a78bfa, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-size: 24px;
+        }
+
+        /* Ошибка */
+        .error {
+            color: #f43f5e;
+            text-align: center;
+            font-weight: 700;
+            padding: 12px;
+            background: rgba(244, 63, 94, 0.1);
+            border: 2px solid rgba(244, 63, 94, 0.4);
+            border-radius: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Кнопка выхода в меню -->
+    <a href="math.html" class="back-btn">← В меню</a>
+
+    <h1>НОД и НОК</h1>
+
+    <!-- Список полей ввода -->
+    <div class="inputs" id="inputs">
+        <div class="input-row">
+            <input type="number" placeholder="Число 1" class="num-input" inputmode="numeric">
+            <button class="remove-btn" type="button">×</button>
+        </div>
+        <div class="input-row">
+            <input type="number" placeholder="Число 2" class="num-input" inputmode="numeric">
+            <button class="remove-btn" type="button">×</button>
+        </div>
+    </div>
+
+    <!-- Кнопка добавить число -->
+    <button class="add-btn" id="addBtn">+ Добавить число</button>
+
+    <!-- Кнопка вычислить -->
+    <button class="calc-btn" id="calcBtn">Вычислить</button>
+
+    <!-- Результат -->
+    <div class="result" id="result">
+        <div class="result-row">
+            <span class="result-label">НОД:</span>
+            <span class="result-value" id="gcdResult">—</span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">НОК:</span>
+            <span class="result-value" id="lcmResult">—</span>
+        </div>
+    </div>
+
+    <script>
+        const inputsContainer = document.getElementById('inputs');
+        const addBtn = document.getElementById('addBtn');
+        const calcBtn = document.getElementById('calcBtn');
+        const resultBlock = document.getElementById('result');
+        const gcdResult = document.getElementById('gcdResult');
+        const lcmResult = document.getElementById('lcmResult');
+
+        let counter = 2;
+
+        function updatePlaceholders() {
+            const rows = inputsContainer.querySelectorAll('.input-row');
+            rows.forEach((row, i) => {
+                row.querySelector('.num-input').placeholder = `Число ${i + 1}`;
+                const removeBtn = row.querySelector('.remove-btn');
+                removeBtn.style.display = rows.length > 1 ? 'block' : 'none';
+            });
+            counter = rows.length;
+        }
+
+        addBtn.addEventListener('click', () => {
+            const row = document.createElement('div');
+            row.className = 'input-row';
+            row.innerHTML = `
+                <input type="number" placeholder="Число" class="num-input" inputmode="numeric">
+                <button class="remove-btn" type="button">×</button>
+            `;
+            inputsContainer.appendChild(row);
+
+            row.querySelector('.remove-btn').addEventListener('click', () => {
+                row.remove();
+                updatePlaceholders();
+            });
+
+            row.querySelector('input').focus();
+            updatePlaceholders();
+        });
+
+        document.querySelectorAll('.remove-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const row = e.target.closest('.input-row');
+                if (inputsContainer.children.length > 1) {
+                    row.remove();
+                    updatePlaceholders();
+                }
+            });
+        });
+
+        function gcd(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b !== 0) [a, b] = [b, a % b];
+            return a;
+        }
+
+        function lcm(a, b) {
+            if (a === 0 || b === 0) return 0;
+            return Math.abs(a * b) / gcd(a, b);
+        }
+
+        function gcdArray(arr) {
+            return arr.reduce((acc, val) => gcd(acc, val));
+        }
+
+        function lcmArray(arr) {
+            return arr.reduce((acc, val) => lcm(acc, val));
+        }
+
+        calcBtn.addEventListener('click', () => {
+            const allInputs = inputsContainer.querySelectorAll('.num-input');
+            const numbers = [];
+
+            for (let inp of allInputs) {
+                const val = inp.value.trim();
+                if (val === '') {
+                    showError('Заполни все поля!');
+                    return;
+                }
+                const num = parseInt(val, 10);
+                if (isNaN(num) || num === 0) {
+                    showError('Числа должны быть целыми и не равны нулю!');
+                    return;
+                }
+                numbers.push(num);
+            }
+
+            if (numbers.length < 1) {
+                showError('Введи хотя бы одно число!');
+                return;
+            }
+
+            try {
+                const g = gcdArray(numbers);
+                const l = lcmArray(numbers);
+                gcdResult.textContent = g.toLocaleString('ru-RU');
+                lcmResult.textContent = l.toLocaleString('ru-RU');
+                resultBlock.classList.add('visible');
+            } catch (e) {
+                showError('Ошибка вычисления. Проверь числа.');
+            }
+        });
+
+        function showError(text) {
+            resultBlock.classList.remove('visible');
+            const old = document.querySelector('.error');
+            if (old) old.remove();
+
+            const err = document.createElement('div');
+            err.className = 'error';
+            err.textContent = text;
+            calcBtn.insertAdjacentElement('afterend', err);
+
+            setTimeout(() => err.remove(), 2500);
+        }
+
+        updatePlaceholders();
+    </script>
+
+</body>
+</html>

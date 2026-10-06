@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0518">
+    <title>Переводчик</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <a href="english.html" class="back-btn">← В меню</a>
+
+    <h1>Переводчик</h1>
+
+    <!-- Переключатель направления -->
+    <div class="lang-switch">
+        <button class="lang-btn active" id="btnEnRu" type="button">EN → RU</button>
+        <button class="lang-switch-arrow" id="swapBtn" type="button" title="Поменять направление">⇄</button>
+        <button class="lang-btn" id="btnRuEn" type="button">RU → EN</button>
+    </div>
+
+    <!-- Поле ввода текста -->
+    <div class="input-row">
+        <textarea id="inputText" class="full-width translate-textarea" placeholder="Введите текст на английском..." rows="4"></textarea>
+    </div>
+
+    <button class="calc-btn" id="translateBtn">Перевести</button>
+
+    <!-- Результат -->
+    <div class="result" id="result">
+        <div class="result-title">Перевод</div>
+        <div class="translate-result" id="translateResult">—</div>
+        <div class="translate-hint" id="translateHint"></div>
+    </div>
+
+    <script>
+        let direction = 'en-ru'; // 'en-ru' или 'ru-en'
+
+        const inputText = document.getElementById('inputText');
+        const translateBtn = document.getElementById('translateBtn');
+        const resultBlock = document.getElementById('result');
+        const translateResult = document.getElementById('translateResult');
+        const translateHint = document.getElementById('translateHint');
+        const btnEnRu = document.getElementById('btnEnRu');
+        const btnRuEn = document.getElementById('btnRuEn');
+        const swapBtn = document.getElementById('swapBtn');
+
+        // === Переключение направления ===
+        function setDirection(dir) {
+            direction = dir;
+            if (dir === 'en-ru') {
+                btnEnRu.classList.add('active');
+                btnRuEn.classList.remove('active');
+                inputText.placeholder = 'Введите текст на английском...';
+            } else {
+                btnRuEn.classList.add('active');
+                btnEnRu.classList.remove('active');
+                inputText.placeholder = 'Введите текст на русском...';
+            }
+            resultBlock.classList.remove('visible');
+        }
+
+        btnEnRu.addEventListener('click', () => setDirection('en-ru'));
+        btnRuEn.addEventListener('click', () => setDirection('ru-en'));
+        swapBtn.addEventListener('click', () => {
+            setDirection(direction === 'en-ru' ? 'ru-en' : 'en-ru');
+        });
+
+        // === Перевод через MyMemory API ===
+        async function translate() {
+            const text = inputText.value.trim();
+            if (text === '') {
+                showError('Введите текст!');
+                return;
+            }
+
+            // Меняем кнопку на "Переводим..."
+            translateBtn.disabled = true;
+            translateBtn.textContent = 'Переводим...';
+            resultBlock.classList.remove('visible');
+
+            // Формируем код языков: en|ru или ru|en
+            const langPair = direction === 'en-ru' ? 'en|ru' : 'ru|en';
+
+            try {
+                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error('Ошибка сети');
+                }
+
+                const data = await response.json();
+
+                // Проверяем, есть ли перевод
+                if (!data.responseData || !data.responseData.translatedText) {
+                    throw new Error('Пустой ответ от сервера');
+                }
+
+                let translated = data.responseData.translatedText;
+
+                // Иногда MyMemory возвращает ошибки в самом тексте
+                if (translated.toUpperCase().includes('MYMEMORY WARNING') || 
+                    translated.toUpperCase().includes('QUERY LENGTH LIMIT')) {
+                    throw new Error('Лимит запросов исчерпан. Попробуйте позже.');
+                }
+
+                // Декодируем HTML-сущности (если есть)
+                translated = decodeHTMLEntities(translated);
+
+                translateResult.textContent = translated;
+                translateHint.textContent = `Направление: ${direction === 'en-ru' ? 'англ → рус' : 'рус → англ'}`;
+                resultBlock.classList.add('visible');
+
+            } catch (err) {
+                console.error(err);
+                showError('Не удалось перевести. Проверьте интернет.');
+            } finally {
+                translateBtn.disabled = false;
+                translateBtn.textContent = 'Перевести';
+            }
+        }
+
+        // === Декодирование HTML-сущностей (например, &quot; → ") ===
+        function decodeHTMLEntities(text) {
+            const txt = document.createElement('textarea');
+            txt.innerHTML = text;
+            return txt.value;
+        }
+
+        translateBtn.addEventListener('click', translate);
+
+        // Перевод по Ctrl+Enter или Cmd+Enter
+        inputText.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                translate();
+            }
+        });
+
+        function showError(text) {
+            resultBlock.classList.remove('visible');
+            const old = document.querySelector('.error');
+            if (old) old.remove();
+
+            const err = document.createElement('div');
+            err.className = 'error';
+            err.textContent = text;
+            translateBtn.insertAdjacentElement('afterend', err);
+
+            setTimeout(() => err.remove(), 3000);
+        }
+
+        inputText.focus();
+    </script>
+
+</body>
+</html>

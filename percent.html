@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0518">
+    <title>Проценты</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <a href="math.html" class="back-btn">← В меню</a>
+
+    <h1>Проценты</h1>
+
+    <!-- Переключатель режима -->
+    <div class="mode-switch">
+        <button class="mode-btn active" data-mode="find-percent" type="button">
+            % от числа
+        </button>
+        <button class="mode-btn" data-mode="find-ratio" type="button">
+            сколько %
+        </button>
+        <button class="mode-btn" data-mode="find-number" type="button">
+            найти число
+        </button>
+        <button class="mode-btn" data-mode="add-sub" type="button">
+            +/− %
+        </button>
+    </div>
+
+    <!-- Подсказка, что вводить -->
+    <div class="mode-hint" id="modeHint">
+        Найти, сколько составляет P% от числа N.
+    </div>
+
+    <!-- Поля ввода -->
+    <div class="percent-inputs">
+        <div class="input-row">
+            <label class="input-label" id="label1">Процент (P):</label>
+            <input type="number" id="val1" class="full-width" placeholder="Например: 20" inputmode="decimal" step="any">
+        </div>
+        <div class="input-row">
+            <label class="input-label" id="label2">Число (N):</label>
+            <input type="number" id="val2" class="full-width" placeholder="Например: 150" inputmode="decimal" step="any">
+        </div>
+    </div>
+
+    <!-- Кнопка "Вычислить" -->
+    <button class="calc-btn" id="calcBtn">Вычислить</button>
+
+    <!-- Результат -->
+    <div class="result" id="result">
+        <div class="result-title">Ответ</div>
+        <div class="translate-result" id="answer">—</div>
+
+        <div class="result-title" style="margin-top:15px;">Пошаговое решение</div>
+        <div class="steps" id="steps"></div>
+    </div>
+
+    <script>
+        let mode = 'find-percent';
+
+        const val1 = document.getElementById('val1');
+        const val2 = document.getElementById('val2');
+        const label1 = document.getElementById('label1');
+        const label2 = document.getElementById('label2');
+        const modeHint = document.getElementById('modeHint');
+        const calcBtn = document.getElementById('calcBtn');
+        const resultBlock = document.getElementById('result');
+        const answerEl = document.getElementById('answer');
+        const stepsEl = document.getElementById('steps');
+
+        // === Переключение режима ===
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                mode = btn.dataset.mode;
+                updateModeUI();
+            });
+        });
+
+        function updateModeUI() {
+            resultBlock.classList.remove('visible');
+            if (mode === 'find-percent') {
+                label1.textContent = 'Процент (P):';
+                label2.textContent = 'Число (N):';
+                val1.placeholder = 'Например: 20';
+                val2.placeholder = 'Например: 150';
+                modeHint.textContent = 'Найти, сколько составляет P% от числа N.';
+            } else if (mode === 'find-ratio') {
+                label1.textContent = 'Часть (X):';
+                label2.textContent = 'Целое (Y):';
+                val1.placeholder = 'Например: 30';
+                val2.placeholder = 'Например: 150';
+                modeHint.textContent = 'Найти, сколько процентов составляет X от Y.';
+            } else if (mode === 'find-number') {
+                label1.textContent = 'Процент (P):';
+                label2.textContent = 'Значение (X):';
+                val1.placeholder = 'Например: 20';
+                val2.placeholder = 'Например: 30';
+                modeHint.textContent = 'Найти число, P% которого равно X.';
+            } else if (mode === 'add-sub') {
+                label1.textContent = 'Число (N):';
+                label2.textContent = 'Процент (P, +/−):';
+                val1.placeholder = 'Например: 150';
+                val2.placeholder = 'Например: 20 или -15';
+                modeHint.textContent = 'Прибавить (+) или вычесть (−) P% от числа N.';
+            }
+        }
+
+        // === Форматирование числа ===
+        function fmt(n) {
+            if (!isFinite(n)) return '—';
+            // Округляем до 4 знаков после запятой, убираем лишние нули
+            let rounded = Math.round(n * 10000) / 10000;
+            return rounded.toLocaleString('ru-RU', { maximumFractionDigits: 4 });
+        }
+
+        // === Расчёт ===
+        calcBtn.addEventListener('click', () => {
+            const s1 = val1.value.trim();
+            const s2 = val2.value.trim();
+
+            if (s1 === '' || s2 === '') {
+                showError('Заполните оба поля!');
+                return;
+            }
+
+            const a = parseFloat(s1.replace(',', '.'));
+            const b = parseFloat(s2.replace(',', '.'));
+
+            if (isNaN(a) || isNaN(b)) {
+                showError('Введите корректные числа!');
+                return;
+            }
+
+            const steps = [];
+            let answer = '';
+
+            try {
+                // 1. Найти P% от N
+                if (mode === 'find-percent') {
+                    if (a < 0) { showError('Процент не может быть отрицательным!'); return; }
+                    const result = (a / 100) * b;
+                    answer = `${fmt(result)}`;
+
+                    steps.push(`Формула: P% от N = (P / 100) × N`);
+                    steps.push(`Подставляем: (${fmt(a)} / 100) × ${fmt(b)}`);
+                    steps.push(`= ${fmt(a / 100)} × ${fmt(b)}`);
+                    steps.push(`= ${fmt(result)}`);
+                    steps.push(`Ответ: ${fmt(a)}% от ${fmt(b)} = ${fmt(result)}`);
+                }
+
+                // 2. Сколько % составляет X от Y
+                else if (mode === 'find-ratio') {
+                    if (b === 0) { showError('Целое не может быть нулём!'); return; }
+                    const result = (a / b) * 100;
+                    answer = `${fmt(result)} %`;
+
+                    steps.push(`Формула: (X / Y) × 100%`);
+                    steps.push(`Подставляем: (${fmt(a)} / ${fmt(b)}) × 100%`);
+                    steps.push(`= ${fmt(a / b)} × 100%`);
+                    steps.push(`= ${fmt(result)}%`);
+                    steps.push(`Ответ: ${fmt(a)} от ${fmt(b)} = ${fmt(result)}%`);
+                }
+
+                // 3. Найти число, P% которого = X
+                else if (mode === 'find-number') {
+                    if (a === 0) { showError('Процент не может быть нулём!'); return; }
+                    const result = (b / a) * 100;
+                    answer = `${fmt(result)}`;
+
+                    steps.push(`Формула: N = (X / P) × 100`);
+                    steps.push(`Подставляем: (${fmt(b)} / ${fmt(a)}) × 100`);
+                    steps.push(`= ${fmt(b / a)} × 100`);
+                    steps.push(`= ${fmt(result)}`);
+                    steps.push(`Ответ: число, ${fmt(a)}% которого = ${fmt(b)}, равно ${fmt(result)}`);
+                }
+
+                // 4. Прибавить/вычесть P% от N
+                else if (mode === 'add-sub') {
+                    const delta = (a * b) / 100;
+                    const result = a + delta;
+
+                    const sign = b >= 0 ? '+' : '−';
+                    const absP = Math.abs(b);
+                    const deltaAbs = Math.abs(delta);
+
+                    answer = `${fmt(result)}`;
+
+                    steps.push(`Формула: N ${sign} P% от N = N ${sign} (N × P / 100)`);
+                    steps.push(`Найдём ${absP}% от ${fmt(a)}: (${fmt(a)} × ${fmt(absP)}) / 100 = ${fmt(deltaAbs)}`);
+                    steps.push(`${fmt(a)} ${sign} ${fmt(deltaAbs)} = ${fmt(result)}`);
+                    steps.push(`Ответ: ${fmt(result)}`);
+                }
+            } catch (e) {
+                showError('Ошибка вычисления.');
+                return;
+            }
+
+            answerEl.textContent = answer;
+            stepsEl.innerHTML = '';
+            steps.forEach((step, i) => {
+                const div = document.createElement('div');
+                div.className = 'step';
+                div.innerHTML = `<span class="step-num">${i + 1}.</span> ${step}`;
+                stepsEl.appendChild(div);
+            });
+
+            resultBlock.classList.add('visible');
+        });
+
+        // === Ошибки ===
+        function showError(text) {
+            resultBlock.classList.remove('visible');
+            const old = document.querySelector('.error');
+            if (old) old.remove();
+
+            const err = document.createElement('div');
+            err.className = 'error';
+            err.textContent = text;
+            calcBtn.insertAdjacentElement('afterend', err);
+
+            setTimeout(() => err.remove(), 3000);
+        }
+
+        // Первичная настройка UI
+        updateModeUI();
+        val1.focus();
+    </script>
+
+</body>
+</html>

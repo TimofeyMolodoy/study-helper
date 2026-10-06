@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0518">
+    <title>Времена</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <a href="english.html" class="back-btn">← В английский</a>
+
+    <h1>Времена</h1>
+
+    <!-- Поиск -->
+    <div class="input-row">
+        <input type="text" id="searchInput" class="full-width" placeholder="Поиск: Present, yesterday, usually..." autocomplete="off">
+    </div>
+
+    <!-- Список времён -->
+    <div class="tenses-container" id="tensesContainer"></div>
+
+    <!-- Ничего не найдено -->
+    <div class="empty-message" id="emptyMessage" style="display:none;">
+        Ничего не найдено 🤷
+    </div>
+
+    <script>
+        // ============================================================
+        // БАЗА ВРЕМЁН
+        // ============================================================
+        const TENSES = [
+            {
+                name: "Present Simple",
+                ru: "Простое настоящее",
+                formula: {
+                    plus: "V1 / V1 + s (для he, she, it)",
+                    minus: "do/does + not + V1",
+                    question: "Do/Does + ... + V1?"
+                },
+                when: "Регулярные действия, факты, расписания.",
+                markers: ["usually", "always", "often", "sometimes", "never", "every day"],
+                examples: [
+                    { en: "I go to school every day.", ru: "Я хожу в школу каждый день." },
+                    { en: "She doesn't like coffee.", ru: "Она не любит кофе." },
+                    { en: "Do you speak English?", ru: "Ты говоришь по-английски?" }
+                ]
+            },
+            {
+                name: "Present Continuous",
+                ru: "Настоящее длительное",
+                formula: {
+                    plus: "am/is/are + V-ing",
+                    minus: "am/is/are + not + V-ing",
+                    question: "Am/Is/Are + ... + V-ing?"
+                },
+                when: "Действие происходит прямо сейчас или в ближайшем будущем.",
+                markers: ["now", "at the moment", "right now", "today", "Look!", "Listen!"],
+                examples: [
+                    { en: "I am reading a book now.", ru: "Я сейчас читаю книгу." },
+                    { en: "He isn't sleeping.", ru: "Он не спит." },
+                    { en: "Are they playing football?", ru: "Они играют в футбол?" }
+                ]
+            },
+            {
+                name: "Present Perfect",
+                ru: "Настоящее совершённое",
+                formula: {
+                    plus: "have/has + V3",
+                    minus: "have/has + not + V3",
+                    question: "Have/Has + ... + V3?"
+                },
+                when: "Действие завершено, но важен результат сейчас. Опыт, достижения.",
+                markers: ["already", "yet", "just", "ever", "never", "since", "for"],
+                examples: [
+                    { en: "I have already done my homework.", ru: "Я уже сделал домашнюю работу." },
+                    { en: "She hasn't seen this film yet.", ru: "Она ещё не смотрела этот фильм." },
+                    { en: "Have you ever been to London?", ru: "Ты когда-нибудь был в Лондоне?" }
+                ]
+            },
+            {
+                name: "Past Simple",
+                ru: "Простое прошедшее",
+                formula: {
+                    plus: "V2 (правильные: V1 + -ed)",
+                    minus: "did + not + V1",
+                    question: "Did + ... + V1?"
+                },
+                when: "Действие завершилось в прошлом (важно когда именно).",
+                markers: ["yesterday", "last week", "ago", "in 2020", "then", "when"],
+                examples: [
+                    { en: "I visited my grandma yesterday.", ru: "Я навестил бабушку вчера." },
+                    { en: "He didn't go to the party.", ru: "Он не пошёл на вечеринку." },
+                    { en: "Did you see that film?", ru: "Ты видел тот фильм?" }
+                ]
+            },
+            {
+                name: "Past Continuous",
+                ru: "Прошедшее длительное",
+                formula: {
+                    plus: "was/were + V-ing",
+                    minus: "was/were + not + V-ing",
+                    question: "Was/Were + ... + V-ing?"
+                },
+                when: "Действие длилось в определённый момент в прошлом.",
+                markers: ["at 5 o'clock yesterday", "while", "when", "all day yesterday"],
+                examples: [
+                    { en: "I was reading at 7 pm yesterday.", ru: "Я читал вчера в 7 вечера." },
+                    { en: "They weren't sleeping when I came.", ru: "Они не спали, когда я пришёл." },
+                    { en: "Was she cooking when you called?", ru: "Она готовила, когда ты позвонил?" }
+                ]
+            },
+            {
+                name: "Past Perfect",
+                ru: "Прошедшее совершённое",
+                formula: {
+                    plus: "had + V3",
+                    minus: "had + not + V3",
+                    question: "Had + ... + V3?"
+                },
+                when: "Действие завершилось ДО другого действия в прошлом.",
+                markers: ["before", "after", "by the time", "already", "when"],
+                examples: [
+                    { en: "I had done my homework before mom came.", ru: "Я сделал домашнюю работу до того, как пришла мама." },
+                    { en: "She hadn't eaten before the lesson.", ru: "Она не ела до урока." },
+                    { en: "Had you seen him before that day?", ru: "Ты видел его до того дня?" }
+                ]
+            },
+            {
+                name: "Future Simple",
+                ru: "Простое будущее",
+                formula: {
+                    plus: "will + V1",
+                    minus: "will + not (won't) + V1",
+                    question: "Will + ... + V1?"
+                },
+                when: "Решения в момент речи, предсказания, обещания.",
+                markers: ["tomorrow", "next week", "soon", "in 2 days", "I think"],
+                examples: [
+                    { en: "I will call you tomorrow.", ru: "Я позвоню тебе завтра." },
+                    { en: "She won't come to the party.", ru: "Она не придёт на вечеринку." },
+                    { en: "Will you help me?", ru: "Ты поможешь мне?" }
+                ]
+            },
+            {
+                name: "Future Continuous",
+                ru: "Будущее длительное",
+                formula: {
+                    plus: "will be + V-ing",
+                    minus: "will + not + be + V-ing",
+                    question: "Will + ... + be + V-ing?"
+                },
+                when: "Действие будет длиться в определённый момент в будущем.",
+                markers: ["at 5 o'clock tomorrow", "this time tomorrow", "all day tomorrow"],
+                examples: [
+                    { en: "I will be studying at 6 pm tomorrow.", ru: "Завтра в 6 вечера я буду учиться." },
+                    { en: "They won't be sleeping at 10.", ru: "Они не будут спать в 10." },
+                    { en: "Will you be working this evening?", ru: "Ты будешь работать сегодня вечером?" }
+                ]
+            },
+            {
+                name: "Future Perfect",
+                ru: "Будущее совершённое",
+                formula: {
+                    plus: "will have + V3",
+                    minus: "will + not + have + V3",
+                    question: "Will + ... + have + V3?"
+                },
+                when: "Действие завершится К определённому моменту в будущем.",
+                markers: ["by tomorrow", "by 2030", "by the time", "before"],
+                examples: [
+                    { en: "I will have finished school by 2027.", ru: "Я закончу школу к 2027 году." },
+                    { en: "She won't have read the book by Friday.", ru: "Она не прочитает книгу к пятнице." },
+                    { en: "Will you have done it by 5 pm?", ru: "Ты сделаешь это к 5 вечера?" }
+                ]
+            }
+        ];
+
+        // ============================================================
+        // РЕНДЕР
+        // ============================================================
+        const tensesContainer = document.getElementById('tensesContainer');
+        const searchInput = document.getElementById('searchInput');
+        const emptyMessage = document.getElementById('emptyMessage');
+
+        function renderTenses(filter = '') {
+            const q = filter.trim().toLowerCase();
+            const filtered = q === '' ? TENSES : TENSES.filter(t =>
+                t.name.toLowerCase().includes(q) ||
+                t.ru.toLowerCase().includes(q) ||
+                t.when.toLowerCase().includes(q) ||
+                t.markers.some(m => m.toLowerCase().includes(q)) ||
+                t.examples.some(e => e.en.toLowerCase().includes(q) || e.ru.toLowerCase().includes(q))
+            );
+
+            tensesContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            emptyMessage.style.display = 'none';
+
+            filtered.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'tense-card';
+                card.innerHTML = `
+                    <div class="tense-header">
+                        <span class="tense-name">${t.name}</span>
+                        <span class="tense-ru">${t.ru}</span>
+                    </div>
+
+                    <div class="tense-section">
+                        <div class="section-label">Формула</div>
+                        <div class="formula-list">
+                            <div class="formula-item">
+                                <span class="formula-mark plus">+</span>
+                                <span class="formula-text">${t.formula.plus}</span>
+                            </div>
+                            <div class="formula-item">
+                                <span class="formula-mark minus">−</span>
+                                <span class="formula-text">${t.formula.minus}</span>
+                            </div>
+                            <div class="formula-item">
+                                <span class="formula-mark question">?</span>
+                                <span class="formula-text">${t.formula.question}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tense-section">
+                        <div class="section-label">Когда используется</div>
+                        <div class="section-text">${t.when}</div>
+                    </div>
+
+                    <div class="tense-section">
+                        <div class="section-label">Слова-маркеры</div>
+                        <div class="markers-list">
+                            ${t.markers.map(m => `<span class="marker-chip">${m}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="tense-section">
+                        <div class="section-label">Примеры</div>
+                        <div class="examples-list">
+                            ${t.examples.map(e => `
+                                <div class="example-item">
+                                    <div class="example-en">${e.en}</div>
+                                    <div class="example-ru">${e.ru}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                tensesContainer.appendChild(card);
+            });
+        }
+
+        searchInput.addEventListener('input', () => renderTenses(searchInput.value));
+        renderTenses();
+    </script>
+
+</body>
+</html>

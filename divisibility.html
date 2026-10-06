@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0518">
+    <title>Признаки делимости</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <a href="math.html" class="back-btn">← В меню</a>
+
+    <h1>Признаки делимости</h1>
+
+    <!-- Поле ввода -->
+    <div class="input-row">
+        <input type="text" id="numInput" class="full-width" placeholder="Введите целое число" inputmode="numeric" autocomplete="off">
+    </div>
+
+    <button class="calc-btn" id="calcBtn">Проверить</button>
+
+    <!-- Результат -->
+    <div class="result" id="result">
+        <div class="result-title">Результаты проверки</div>
+        <div class="divisibility-list" id="divList"></div>
+
+        <div class="result-title" style="margin-top:15px;">Объяснения</div>
+        <div class="steps" id="steps"></div>
+    </div>
+
+    <script>
+        const numInput = document.getElementById('numInput');
+        const calcBtn = document.getElementById('calcBtn');
+        const resultBlock = document.getElementById('result');
+        const divListEl = document.getElementById('divList');
+        const stepsEl = document.getElementById('steps');
+
+        // === Список делителей, которые проверяем ===
+        const DIVISORS = [2, 3, 4, 5, 6, 8, 9, 10, 11];
+
+        // === Основная проверка ===
+        function checkDivisibility(n) {
+            const results = [];
+
+            // Признак 2: последняя цифра чётная
+            const lastDigit = Math.abs(n) % 10;
+            results.push({
+                divisor: 2,
+                divides: n % 2 === 0,
+                explain: n % 2 === 0
+                    ? `Последняя цифра ${lastDigit} — чётная → число делится на 2.`
+                    : `Последняя цифра ${lastDigit} — нечётная → число не делится на 2.`
+            });
+
+            // Признак 3: сумма цифр делится на 3
+            const digitSum = sumOfDigits(n);
+            results.push({
+                divisor: 3,
+                divides: n % 3 === 0,
+                explain: `Сумма цифр = ${digitSum}. ${digitSum} ${digitSum % 3 === 0 ? 'делится' : 'не делится'} на 3 → число ${n % 3 === 0 ? 'делится' : 'не делится'} на 3.`
+            });
+
+            // Признак 4: последние 2 цифры делятся на 4
+            const lastTwo = Math.abs(n) % 100;
+            results.push({
+                divisor: 4,
+                divides: n % 4 === 0,
+                explain: `Последние две цифры: ${String(lastTwo).padStart(2, '0')}. ${lastTwo} ${lastTwo % 4 === 0 ? 'делится' : 'не делится'} на 4 → число ${n % 4 === 0 ? 'делится' : 'не делится'} на 4.`
+            });
+
+            // Признак 5: последняя цифра 0 или 5
+            results.push({
+                divisor: 5,
+                divides: n % 5 === 0,
+                explain: n % 5 === 0
+                    ? `Последняя цифра ${lastDigit} → число делится на 5.`
+                    : `Последняя цифра ${lastDigit} → число не делится на 5 (нужно 0 или 5).`
+            });
+
+            // Признак 6: делится и на 2, и на 3
+            const divBy2 = n % 2 === 0;
+            const divBy3 = n % 3 === 0;
+            results.push({
+                divisor: 6,
+                divides: divBy2 && divBy3,
+                explain: `Число делится на 6, если делится и на 2, и на 3. На 2: ${divBy2 ? 'да' : 'нет'}, на 3: ${divBy3 ? 'да' : 'нет'} → ${divBy2 && divBy3 ? 'делится' : 'не делится'} на 6.`
+            });
+
+            // Признак 8: последние 3 цифры делятся на 8
+            const lastThree = Math.abs(n) % 1000;
+            results.push({
+                divisor: 8,
+                divides: n % 8 === 0,
+                explain: `Последние три цифры: ${String(lastThree).padStart(3, '0')}. ${lastThree} ${lastThree % 8 === 0 ? 'делится' : 'не делится'} на 8 → число ${n % 8 === 0 ? 'делится' : 'не делится'} на 8.`
+            });
+
+            // Признак 9: сумма цифр делится на 9
+            results.push({
+                divisor: 9,
+                divides: n % 9 === 0,
+                explain: `Сумма цифр = ${digitSum}. ${digitSum} ${digitSum % 9 === 0 ? 'делится' : 'не делится'} на 9 → число ${n % 9 === 0 ? 'делится' : 'не делится'} на 9.`
+            });
+
+            // Признак 10: последняя цифра 0
+            results.push({
+                divisor: 10,
+                divides: n % 10 === 0,
+                explain: n % 10 === 0
+                    ? `Последняя цифра 0 → число делится на 10.`
+                    : `Последняя цифра ${lastDigit} → число не делится на 10 (нужен 0).`
+            });
+
+            // Признак 11: сумма цифр на чётных и нечётных местах
+            const { evenSum, oddSum, diff } = alternatingSum(n);
+            results.push({
+                divisor: 11,
+                divides: n % 11 === 0,
+                explain: `Сумма цифр на нечётных местах = ${oddSum}, на чётных = ${evenSum}. Разность: |${oddSum} − ${evenSum}| = ${Math.abs(diff)}. ${Math.abs(diff) % 11 === 0 ? 'Делится' : 'Не делится'} на 11 → число ${n % 11 === 0 ? 'делится' : 'не делится'} на 11.`
+            });
+
+            return results;
+        }
+
+        // === Сумма цифр ===
+        function sumOfDigits(n) {
+            return String(Math.abs(n)).split('').reduce((s, d) => s + parseInt(d, 10), 0);
+        }
+
+        // === Сумма цифр на чётных и нечётных местах (для признака 11) ===
+        function alternatingSum(n) {
+            const str = String(Math.abs(n));
+            let evenSum = 0; // чётные места (2-я, 4-я, ...) — с точки зрения справа
+            let oddSum = 0;  // нечётные места (1-я, 3-я, ...) — с точки зрения справа
+
+            // Идём справа налево
+            for (let i = 0; i < str.length; i++) {
+                const digit = parseInt(str[str.length - 1 - i], 10);
+                if (i % 2 === 0) {
+                    oddSum += digit; // 1-е место справа, 3-е, 5-е...
+                } else {
+                    evenSum += digit;
+                }
+            }
+            return { evenSum, oddSum, diff: oddSum - evenSum };
+        }
+
+        // === Кнопка "Проверить" ===
+        calcBtn.addEventListener('click', () => {
+            const raw = numInput.value.trim();
+            if (raw === '') {
+                showError('Введите число!');
+                return;
+            }
+
+            // Разрешаем отрицательные и просто числа без пробелов
+            const cleaned = raw.replace(/\s+/g, '');
+
+            // Проверяем, что это целое число (может быть со знаком −)
+            if (!/^-?\d+$/.test(cleaned)) {
+                showError('Введите целое число (без точек и запятых)!');
+                return;
+            }
+
+            const n = parseInt(cleaned, 10);
+
+            if (n === 0) {
+                showError('Ноль делится на всё, но это неинтересно 😉');
+                return;
+            }
+
+            if (Math.abs(n) > 1e15) {
+                showError('Слишком большое число (макс. 10¹⁵)');
+                return;
+            }
+
+            const results = checkDivisibility(n);
+
+            // Строим сетку результатов
+            divListEl.innerHTML = '';
+            results.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'div-item ' + (r.divides ? 'yes' : 'no');
+                item.innerHTML = `
+                    <span class="div-num">${r.divisor}</span>
+                    <span class="div-mark">${r.divides ? '✔' : '✘'}</span>
+                `;
+                divListEl.appendChild(item);
+            });
+
+            // Строим объяснения
+            stepsEl.innerHTML = '';
+            results.forEach((r, i) => {
+                const div = document.createElement('div');
+                div.className = 'step';
+                div.innerHTML = `<span class="step-num">${r.divisor}.</span> ${r.explain}`;
+                stepsEl.appendChild(div);
+            });
+
+            resultBlock.classList.add('visible');
+        });
+
+        // === Ошибки ===
+        function showError(text) {
+            resultBlock.classList.remove('visible');
+            const old = document.querySelector('.error');
+            if (old) old.remove();
+
+            const err = document.createElement('div');
+            err.className = 'error';
+            err.textContent = text;
+            calcBtn.insertAdjacentElement('afterend', err);
+
+            setTimeout(() => err.remove(), 3000);
+        }
+
+        numInput.focus();
+    </script>
+
+</body>
+</html>
