@@ -12,7 +12,7 @@ const FILES_TO_CACHE = [
     './percent.html',
     './divisibility.html',
     './translate.html',
-    './irregular.html',
+    './irregual.html',
     './tenses.html',
     './style.css',
     './manifest.json'
